@@ -2,10 +2,25 @@ var countis = 0
 var setintfn;
 var runnertimes={}
 var globalstarttime;
+var offsetlastrace = 0;
+var lastcurrdatatime;
+
+function resetrunnerfirstlapflag(){
+    for (let i in runnertimes){
+        runnertimes[i]["firstlapsincestart"] = true
+    }
+}
+
+function resetrunnertabletimes(){
+    $(".lapcount").text("0");
+    $(".totaltime").text("todo");
+    $(".averagetime").text("todo");
+    $(".lastlap").text("");
+}
 
 function findoffset(starttime, endtime){
 
-         let offset = endtime - starttime;         
+         let offset = endtime - starttime;
 
          let hours = offset/(1000 *60 * 60)
          hours = Math.floor(hours)
@@ -19,11 +34,21 @@ function findoffset(starttime, endtime){
          seconds = Math.floor(seconds)
 
          let mseconds = offset%1000
+         try{
 
-         mseconds = mseconds.toString();
-         let requiredlen = 3 - mseconds.length;
-         mseconds = "0".repeat(requiredlen) + mseconds
-         //console.log(mseconds)
+             mseconds = mseconds.toString();
+             console.log(mseconds.length)
+             let requiredlen = 3 - mseconds.length;
+             mseconds = "0".repeat(requiredlen) + mseconds
+             //console.log(mseconds)
+
+             }
+         catch(err){
+
+             console.log("error")
+
+         }
+
 
          let offsettimestring = hours + 'H '+minutes+'M '+seconds+'S ' + mseconds+'Mi'
          return offsettimestring
@@ -43,16 +68,17 @@ $(document).ready(function(){
         let idtd4 = runnerid + 'td4';
         let tablerowstr = '<tr>\
         <td><button id="'+runnerid+'" class="button button4">'+rnameis+'</button></td>\
-        <td id="'+idtd1+'">0</td>\
-        <td id="'+idtd2+'"></td>\
-        <td id="'+idtd3+'"></td>\
-        <td id="'+idtd4+'"></td>\
+        <td id="'+idtd1+'" class="lapcount">0</td>\
+        <td id="'+idtd2+'" class="totaltime"></td>\
+        <td id="'+idtd3+'" class="averagetime"></td>\
+        <td id="'+idtd4+'" class="lastlap"></td>\
         </tr>'
         
         $('table tr:last').after(tablerowstr);
 
         runnertimes[runnerid] = {            
-                lastlaptime:0                                    
+                lastlaptime:0,
+                firstlapsincestart:true                                    
         };
 
         $("#"+runnerid).click(function(){
@@ -64,7 +90,7 @@ $(document).ready(function(){
 
             let lapcount = $("#"+idtd1).text();
             let offsettime;
-            if( lapcount <= 0){
+            if( lapcount <= 0  ){
                 let currlaptimeis = new Date().getTime();                
                 runnertimes[runnerid]["lastlaptime"] = currlaptimeis;
                 offsettime = findoffset(globalstarttime, currlaptimeis);                
@@ -77,6 +103,8 @@ $(document).ready(function(){
             }
 
             lapcount++;
+            runnertimes[runnerid]["firstlapsincestart"] = false
+
 
             $("#"+idtd1).text(lapcount);
             $("#"+idtd2).text("todo");
@@ -87,33 +115,43 @@ $(document).ready(function(){
 
      $("#startrace").click(function(){
 
-        //$("#startrace").prop("disabled", true);
-        //$(this).css("background-color", "#f44336")
-       // $(this).css({ 'disabled' : 'true'})
-        //$(this).attr("background-color", "#f44336")
-
-
-
         $(this).prop('disabled', true);
         $(".button4").prop('disabled', false);
 
          counteron = true;
-
          globalstarttime = new Date().getTime();
+         
          setintfn = setInterval(function(){
-         currdate = new Date().getTime();
+             currdate = new Date().getTime();
 
-         let cstrtime = findoffset(globalstarttime, currdate);
-         $("#timeval").text(cstrtime)
-     }, 1);
+             let cstrtime = findoffset(globalstarttime, currdate);
+             $("#timeval").text(cstrtime)
+             }, 1);
   
      });
 
      $("#endrace").click(function(){
-         clearInterval(setintfn)
-         //$("#timeval").text("0H 0M 0S 000Mi")   
-         $("#startrace").prop('disabled', false);
-         $(".button4").prop('disabled', true);       
+
+            clearInterval(setintfn);
+            offsetlastrace = 0;
+            $("#startrace").prop('disabled', false);
+            $(".button4").prop('disabled', true);
+            resetrunnertabletimes();
+
+    });
+
+    $("#endrace").dblclick(function(){
+
+            clearInterval(setintfn);
+            offsetlastrace = 0;
+            $("#timeval").text("0H 0M 0S 000Mi")  
+            $("#startrace").prop('disabled', false);
+            $(".button4").prop('disabled', true);
+            resetrunnertabletimes();
+
+            /*$("div").append("<select></select>");
+            $("select").append("  <option value=\"volvo\">Volvo</option>");
+            resetrunnerfirstlapflag();*/
     });
 
 });
